@@ -8,8 +8,8 @@
 // @version     1.0
 // @author      Sam Evans-Turner
 // @description Convert NBA.com game times shown to local times
-// @updateURL   https://raw.githubusercontent.com/SamEvansTurner/NBAGameTimeLocalizer/master/nba-game-time-localizer.user.js
-// @downloadURL https://raw.githubusercontent.com/SamEvansTurner/NBAGameTimeLocalizer/master/nba-game-time-localizer.user.js
+// @updateURL   https://raw.githubusercontent.com/SamEvansTurner/NBAGameTimeLocalizer/main/nba-game-time-localizer.user.js
+// @downloadURL https://raw.githubusercontent.com/SamEvansTurner/NBAGameTimeLocalizer/main/nba-game-time-localizer.user.js
 // @supportURL  https://github.com/SamEvansTurner/NBAGameTimeLocalizer/issues
 // ==/UserScript==
 
