@@ -80,7 +80,7 @@ function updateGamesPage() {
   var selectedDateText = selectedDate.textContent;
   let {dateOffset, localTimeZone} = calculateDates(selectedDateText);
 
-  var tags = document.querySelectorAll("p.h9.text-xs")
+  var tags = document.querySelectorAll("p[class*=GameCardMatchupStatusText_]")
 
   tags.forEach(
     function(item, iterator) { 
