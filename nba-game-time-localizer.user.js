@@ -5,7 +5,7 @@
 // @match       https://www.nba.com/games*
 // @match       https://www.nba.com/game/*
 // @grant       none
-// @version     2.3
+// @version     3.0
 // @author      Sam Evans-Turner
 // @description Convert NBA.com game times shown to local times
 // @updateURL   https://samevansturner.github.io/NBAGameTimeLocalizer/nba-game-time-localizer.user.js
