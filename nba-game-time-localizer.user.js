@@ -5,7 +5,7 @@
 // @match       https://www.nba.com/games*
 // @match       https://www.nba.com/game/*
 // @grant       none
-// @version     3.0
+// @version     3.1
 // @author      Sam Evans-Turner
 // @description Convert NBA.com game times shown to local times
 // @updateURL   https://samevansturner.github.io/NBAGameTimeLocalizer/nba-game-time-localizer.user.js
@@ -56,7 +56,7 @@ function calculateDates(selectedDateText) {
   var utcDate = new Date(localDate.getTime() + (localDate.getTimezoneOffset() * 60000));
   var dateDiff = newYorkDate.getTime() - utcDate.getTime();
   var dateOffset = convertToOffset(dateDiff)
-  var localTimeZone = new Date().toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', timeZoneName:'short', hour12:false}).split(' ')[1]
+  var localTimeZone = new Date(selectedDateText).toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', timeZoneName:'short', hour12:false}).split(' ')[1]
 
   return {dateOffset, localTimeZone}
 }
