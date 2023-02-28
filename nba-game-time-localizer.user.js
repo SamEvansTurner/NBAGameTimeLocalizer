@@ -5,7 +5,7 @@
 // @match       https://www.nba.com/games*
 // @match       https://www.nba.com/game/*
 // @grant       none
-// @version     3.3
+// @version     3.4
 // @author      Sam Evans-Turner
 // @description Convert NBA.com game times shown to local times
 // @updateURL   https://samevansturner.github.io/NBAGameTimeLocalizer/nba-game-time-localizer.user.js
@@ -18,10 +18,15 @@ let gamesPageMutationTimeout;
 let videoBoxMutationTimeout;
 let videoPageMutationTimeout;
 let gameStripMutationTimeout;
+let jsBarMutationTimeout;
 
 /**********************
  * Accessory Functions
  **********************/
+function logMessage(...args) {
+    console.log("[NBAGameTimeLocalizer]", new Date().toISOString(), ...args)
+}
+
 //This only works on positive, non-decimal numbers.
 function padDigits(number, digits) {
     return Array(Math.max(digits - String(number).length + 1, 0)).join(0) + number;
@@ -74,7 +79,7 @@ function processItemTime(item, selectedDateText, dateOffset, localTimeZone) {
  * Updator Functions
  **********************/
 function updateGamesPage() {
-  console.log("[NBAGameTimeLocalizer]Updating Games Page")
+  logMessage("Updating Games Page")
   let currentday = document.querySelector("button[class*=DatePickerWeek_dayActive]");
   let selectedDate = currentday.attributes['data-content'];
   let selectedDateText = selectedDate.textContent;
@@ -93,7 +98,7 @@ function updateGamesPage() {
 }
 
 function updateJSBar() {
-  console.log("[NBAGameTimeLocalizer]Updating JS Bar")
+  logMessage("Updating JS Bar")
   let currentday = document.querySelector("select[class*=DropDown_select]");
   let selectedDateText = currentday.value;
   let {dateOffset, localTimeZone} = calculateDates(selectedDateText);
@@ -108,7 +113,7 @@ function updateJSBar() {
 }
 
 function updateGameStrip() {
-  console.log("[NBAGameTimeLocalizer]Updating gamestrip")
+  logMessage("Updating gamestrip")
   let currentday = document.querySelector("select[class*=DropDown_select]");
   let selectedDateText = currentday.value;
   let {dateOffset, localTimeZone} = calculateDates(selectedDateText);
@@ -137,12 +142,12 @@ function gamesPageMutation(mutationsList, observer) {
     clearTimeout(gamesPageMutationTimeout);
   }
   gamesPageMutationTimeout = setTimeout(updateGamesPage, 400);
-  console.log("[NBAGameTimeLocalizer]div changed")
+  logMessage("div changed")
 }
 
 function videoBoxMutation(mutationsList, observer) {
   if(videoBoxMutationTimeout){
-    console.log("[NBAGameTimeLocalizer]videobox timeout")
+    logMessage("videobox timeout")
     clearTimeout(videoBoxMutationTimeout);
   }
   let gameStrip = document.querySelector("div[id*=games-carousel]");
@@ -150,16 +155,16 @@ function videoBoxMutation(mutationsList, observer) {
     loadGameStripHook();
     clearTimeout(videoBoxMutationTimeout);
     observer.disconnect();
-    console.log("[NBAGameTimeLocalizer]found gameStrip. Unloading videoBox mutationobserver")
+    logMessage("found gameStrip. Unloading videoBox mutationobserver")
   } else {
-    console.log("[NBAGameTimeLocalizer]videoBox changed")
+    logMessage("videoBox changed")
   }
 
 }
 
 function videoPageMutation(mutationsList, observer) {
   if(videoPageMutationTimeout){
-    console.log("[NBAGameTimeLocalizer]videopage timeout")
+    logMessage("videopage timeout")
     clearTimeout(videoPageMutationTimeout);
   }
   let videoBox = document.querySelector("div[class*=GameHero_video]");
@@ -167,20 +172,25 @@ function videoPageMutation(mutationsList, observer) {
     loadVideoHook();
     clearTimeout(videoPageMutationTimeout);
     observer.disconnect();
-    console.log("[NBAGameTimeLocalizer]found videoBox. Unloading videoPage mutationobserver")
+    logMessage("found videoBox. Unloading videoPage mutationobserver")
   } else {
-    console.log("[NBAGameTimeLocalizer]videoPage changed. ")
+    logMessage("videoPage changed. ")
   }
+}
+
+function jsBarMutation(mutationsList, observer) {
+  logMessage("jsBar changed.")
+  JSBarUpdateFunction()
 }
 
 function gameStripMutation(mutationsList, observer) {
   if(gameStripMutationTimeout){
-    console.log("[NBAGameTimeLocalizer]unloading mutationobserver for gamestrip")
+    logMessage("unloading mutationobserver for gamestrip")
     observer.disconnect();
     clearTimeout(gameStripMutationTimeout);
   }
   gameStripMutationTimeout = setTimeout(updateGameStrip, 400);
-  console.log("[NBAGameTimeLocalizer]gameStrip changed")
+  logMessage("gameStrip changed")
 }
 
 /**********************
@@ -196,7 +206,7 @@ function loadGameStripHook() {
 function loadVideoHook() {
   let videoContainer = document.querySelector("div[class*=GameHero_video]");
   const config = { attributes: true, childList: true, subtree: true };
-  console.log("[NBAGameTimeLocalizer]creating video hook" + videoContainer)
+  logMessage("creating video hook" + videoContainer)
   let obs2 = new MutationObserver(videoBoxMutation);
   obs2.observe(videoContainer, config);
 }
@@ -206,7 +216,7 @@ function loadVideoPageHook() {
   gameContainer = document.querySelector("section[class*=GameHero_container]");
   if(gameContainer != null) {
     const config = { attributes: true, childList: true, subtree: true };
-    console.log("[NBAGameTimeLocalizer]creating video page hook " + gameContainer)
+    logMessage("creating video page hook " + gameContainer)
     let obs4 = new MutationObserver(videoPageMutation);
     obs4.observe(gameContainer, config);
   }
@@ -214,14 +224,13 @@ function loadVideoPageHook() {
 }
 
 function loadJSBarHook() {
-  let currentday = document.querySelector("select[class*=DropDown_select]");
-  let buttons = document.querySelectorAll("button[class*=CarouselButton_btn]");
-  currentday.addEventListener("change", JSBarUpdateFunction);
-  buttons.forEach(
-    function(item, iterator){
-      item.addEventListener("click", JSBarUpdateFunction);
-    });
-  updateJSBar();
+  let jsBar = document.querySelector("div[class*=Scoreboard_content]");
+  if (jsBar != null) {
+    const config = { attributes: true, childList: true, subtree: true };
+    logMessage("creating jsBar hook " + jsBar)
+    let obs5 = new MutationObserver(jsBarMutation);
+    obs5.observe(jsBar, config);
+  }
 }
 
 function loadGamesPageHook() {
