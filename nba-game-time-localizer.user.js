@@ -5,7 +5,7 @@
 // @match       https://www.nba.com/games*
 // @match       https://www.nba.com/game/*
 // @grant       none
-// @version     3.4
+// @version     3.5
 // @author      Sam Evans-Turner
 // @description Convert NBA.com game times shown to local times
 // @updateURL   https://samevansturner.github.io/NBAGameTimeLocalizer/nba-game-time-localizer.user.js
@@ -55,15 +55,19 @@ function TwelveHRtoTwentyFourHR(timeStr) {
   return hoursStr + ":" + minutesStr;
 }
 
-function calculateDates(selectedDateText) {
+function calculateETTimezoneOffset(selectedDateText) {
+  //get the Date object representing the selected date in local time (not necessarily the date the game is on)
   let localDate = new Date(selectedDateText);
+  //get the Date object representing the same time/date in New York City
   let newYorkDate = new Date(localDate.toLocaleString('en-US', {timeZone : 'America/New_York'}));
+  //get the Date object representing the UTC time of the local date
   let utcDate = new Date(localDate.getTime() + (localDate.getTimezoneOffset() * 60000));
+  //get the difference between NY time and UTC time of the same date/time
   let dateDiff = newYorkDate.getTime() - utcDate.getTime();
-  let dateOffset = convertToOffset(dateDiff)
-  let localTimeZone = new Date(selectedDateText).toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', timeZoneName:'short', hour12:false}).split(' ')[1]
-
-  return {dateOffset, localTimeZone}
+  //convert the number to a string representing number of hours
+  let dateOffset = convertToOffset(dateDiff);
+  //Return it (UTC offset for ET time)
+  return dateOffset;
 }
 
 function processItemTime(item, selectedDateText, dateOffset, localTimeZone) {
@@ -75,39 +79,66 @@ function processItemTime(item, selectedDateText, dateOffset, localTimeZone) {
   item.innerText = timeString + " " + localTimeZone;
 }
 
+function getActualDateRepr(actualDate) {
+  //website represents dates in en-US format. So use that to get our equivalent format.
+  let da = actualDate.toLocaleDateString("en-US", {day:"2-digit"});
+  let mo = actualDate.toLocaleDateString("en-US", {month:"2-digit"});
+  let ye = actualDate.toLocaleDateString("en-US", {year:"numeric"});
+  return ye+"-"+mo+"-"+da
+}
+
+function getItemTime(item, selectedDateText, dateOffset) {
+  let time = item.innerText.replace(' ET', '')
+  let TFhrTime = TwelveHRtoTwentyFourHR(time)
+  let nyTime = selectedDateText + "T" + TFhrTime + ":00.000" + dateOffset;
+  let actualDate = new Date(nyTime);
+  let localTimeString = actualDate.toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', hour12:true})
+  let localDateString = getActualDateRepr(actualDate);
+  return {actualDate, localDateString, localTimeString}
+}
+
 /**********************
- * Updator Functions
+ * Updater Functions
  **********************/
 function updateGamesPage() {
   logMessage("Updating Games Page")
   let currentday = document.querySelector("button[class*=DatePickerWeek_dayActive]");
   let selectedDate = currentday.attributes['data-content'];
   let selectedDateText = selectedDate.textContent;
-  let {dateOffset, localTimeZone} = calculateDates(selectedDateText);
+  let dateOffset = calculateETTimezoneOffset(selectedDateText);
+  let localTimeZone = new Date(selectedDateText).toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', timeZoneName:'short', hour12:false}).split(' ')[1]
 
   let tags = document.querySelectorAll("p[class*=GameCardMatchupStatusText_]")
 
   tags.forEach(
     function(item, iterator) {
       if (/.*ET.*/.test(item.innerText)) {
-        processItemTime(item, selectedDateText, dateOffset, localTimeZone);
+        let {actualDate, localDateString, localTimeString} = getItemTime(item, selectedDateText, dateOffset);
+        item.innerText = localTimeString + " " + localTimeZone;
+        if (localDateString != selectedDateText){
+          //Add the local date to the display if dates don't match
+          let shownDateString = actualDate.toLocaleDateString(Navigator.language, {weekday:"short", month:"2-digit", day:"2-digit"});
+          item.insertAdjacentHTML("afterend", "<p>" + shownDateString + "</p>");
+        }
       }
     }
   )
-
 }
 
 function updateJSBar() {
   logMessage("Updating JS Bar")
   let currentday = document.querySelector("select[class*=DropDown_select]");
   let selectedDateText = currentday.value;
-  let {dateOffset, localTimeZone} = calculateDates(selectedDateText);
+  let dateOffset = calculateETTimezoneOffset(selectedDateText);
+  let localTimeZone = new Date(selectedDateText).toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', timeZoneName:'short', hour12:false}).split(' ')[1]
+
 
   let tags = document.querySelectorAll("div[class*=ScoreboardGame_gameStatusText]");
   tags.forEach(
   function(item, iterator){
     if (/.*ET.*/.test(item.innerText)) {
-      processItemTime(item, selectedDateText, dateOffset, localTimeZone)
+      let {localTimeString} = getItemTime(item, selectedDateText, dateOffset);
+      item.innerText = localTimeString + " " + localTimeZone;
     }
   })
 }
@@ -116,7 +147,9 @@ function updateGameStrip() {
   logMessage("Updating gamestrip")
   let currentday = document.querySelector("select[class*=DropDown_select]");
   let selectedDateText = currentday.value;
-  let {dateOffset, localTimeZone} = calculateDates(selectedDateText);
+  let dateOffset = calculateETTimezoneOffset(selectedDateText);
+  let localTimeZone = new Date(selectedDateText).toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', timeZoneName:'short', hour12:false}).split(' ')[1]
+
 
   let gameStrip = document.querySelector("div[id*=games-carousel]");
   if (gameStrip != null) {
@@ -124,7 +157,8 @@ function updateGameStrip() {
     tags.forEach(
       function(item, iterator){
         if (/.*ET.*/.test(item.innerText)) {
-          processItemTime(item, selectedDateText, dateOffset, localTimeZone)
+          let {localTimeString} = getItemTime(item, selectedDateText, dateOffset);
+          item.innerText = localTimeString + " " + localTimeZone;
         }
       })
   }
@@ -230,6 +264,7 @@ function loadJSBarHook() {
     logMessage("creating jsBar hook " + jsBar)
     let obs5 = new MutationObserver(jsBarMutation);
     obs5.observe(jsBar, config);
+    JSBarUpdateFunction()
   }
 }
 
