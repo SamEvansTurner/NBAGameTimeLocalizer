@@ -8,7 +8,7 @@
 // @grant       GM_setValue
 // @grant       GM.getValue
 // @grant       GM.setValue
-// @version     4.0
+// @version     4.1
 // @author      Sam Evans-Turner
 // @description Convert NBA.com game times shown to local times
 // @updateURL   https://samevansturner.github.io/NBAGameTimeLocalizer/nba-game-time-localizer.user.js
