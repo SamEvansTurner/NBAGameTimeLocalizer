@@ -91,7 +91,7 @@ function createSettingsButton(parent) {
   button.innerHTML=emoji
   li.style.cssText += 'display: flex; justify-content: center; align-items: center;'
   li.onmouseover = function(){let el = document.querySelector("div[id=nbagametimesettings]"); el.style.visibility = "visible";};
-  li.onmouseout = function(){let el = document.querySelector("div[id=nbagametimesettings]"); el.style.visibility = "hidden";};
+  li.onmouseout = function(e){if (e.relatedTarget === null) { return; } let el = document.querySelector("div[id=nbagametimesettings]"); el.style.visibility = "hidden";};
   button.style.cssText += 'padding: 0px 8px; display: inline; font-size: 32px;'
   parent.appendChild(li);
   li.appendChild(button);
