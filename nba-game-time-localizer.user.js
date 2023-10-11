@@ -8,7 +8,7 @@
 // @grant       GM_setValue
 // @grant       GM.getValue
 // @grant       GM.setValue
-// @version     4.1
+// @version     4.2
 // @author      Sam Evans-Turner
 // @description Convert NBA.com game times shown to local times
 // @updateURL   https://samevansturner.github.io/NBAGameTimeLocalizer/nba-game-time-localizer.user.js
@@ -227,8 +227,7 @@ function updateJSBar() {
   let dateOffset = calculateETTimezoneOffset(selectedDateText);
   let localTimeZone = new Date(selectedDateText).toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', timeZoneName:'short', hour12:false, timeZone: globalTimeZone}).split(' ')[1]
 
-
-  let tags = document.querySelectorAll("div[class*=ScoreboardGame_gameStatusText]");
+  let tags = document.querySelectorAll("p[class*=ScoreStripGame_gameStatusText]");
   tags.forEach(
   function(item, iterator){
     if (/.*ET.*/.test(item.innerText)) {
@@ -243,8 +242,7 @@ function updateGameStrip() {
   let currentday = document.querySelector("select[class*=DropDown_select]");
   let selectedDateText = currentday.value;
   let dateOffset = calculateETTimezoneOffset(selectedDateText);
-  let localTimeZone = new Date(selectedDateText).toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', timeZoneName:'short', hour12:false, timezone: globalTimeZone}).split(' ')[1]
-
+  let localTimeZone = new Date(selectedDateText).toLocaleTimeString(Navigator.language, {hour:'numeric', minute:'numeric', timeZoneName:'short', hour12:false, timeZone: globalTimeZone}).split(' ')[1]
 
   let gameStrip = document.querySelector("div[id*=games-carousel]");
   if (gameStrip != null) {
@@ -262,10 +260,6 @@ function updateGameStrip() {
 /**********************
  * Mutation Functions
  **********************/
-function JSBarUpdateFunction() {
-  setTimeout(updateJSBar);
-}
-
 function gamesPageMutation(mutationsList, observer) {
   if(gamesPageMutationTimeout){
     clearTimeout(gamesPageMutationTimeout);
@@ -308,8 +302,11 @@ function videoPageMutation(mutationsList, observer) {
 }
 
 function jsBarMutation(mutationsList, observer) {
-  logMessage("jsBar changed.")
-  JSBarUpdateFunction()
+  if(jsBarMutationTimeout){
+    clearTimeout(jsBarMutationTimeout);
+  }
+  jsBarMutationTimeout = setTimeout(updateJSBar, 100);
+  logMessage("jsBar changed");
 }
 
 function gameStripMutation(mutationsList, observer) {
@@ -335,7 +332,8 @@ function loadGameStripHook() {
 function loadVideoHook() {
   let videoContainer = document.querySelector("div[class*=GameHero_video]");
   const config = { attributes: true, childList: true, subtree: true };
-  logMessage("creating video hook" + videoContainer)
+  logMessage("creating video hook")
+  logMessage(videoContainer)
   let obs2 = new MutationObserver(videoBoxMutation);
   obs2.observe(videoContainer, config);
 }
@@ -345,7 +343,8 @@ function loadVideoPageHook() {
   gameContainer = document.querySelector("section[class*=GameHero_container]");
   if(gameContainer != null) {
     const config = { attributes: true, childList: true, subtree: true };
-    logMessage("creating video page hook " + gameContainer)
+    logMessage("creating video page hook ")
+    logMessage(gameContainer);
     let obs4 = new MutationObserver(videoPageMutation);
     obs4.observe(gameContainer, config);
   }
@@ -353,10 +352,11 @@ function loadVideoPageHook() {
 }
 
 function loadJSBarHook() {
-  let jsBar = document.querySelector("div[class*=Scoreboard_content]");
+  let jsBar = document.querySelector("div[class*=ScoreStrip_content]");
   if (jsBar != null) {
     const config = { attributes: true, childList: true, subtree: true };
-    logMessage("creating jsBar hook " + jsBar)
+    logMessage("creating jsBar hook ")
+    logMessage(jsBar)
     let obs5 = new MutationObserver(jsBarMutation);
     obs5.observe(jsBar, config);
     JSBarUpdateFunction()
